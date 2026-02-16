@@ -1,14 +1,15 @@
 """
-車検証処理Webアプリ
-車検証画像/PDFをアップロードして、車両台帳Excelを自動生成するツール
+あさひ国際会計 業務支援ツール
+車検証処理、財務諸表処理など複数の機能を提供
 """
 import streamlit as st
 from webapp.vehicle_processor_web import VehicleProcessorWeb
+from webapp.financial_processor_web import FinancialProcessorWeb
 
 # ページ設定
 st.set_page_config(
-    page_title="車検証処理ツール | あさひ国際会計",
-    page_icon="🚗",
+    page_title="業務支援ツール | あさひ国際会計",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -121,7 +122,7 @@ def check_password():
     # 認証画面
     st.markdown("""
     <div class="header-container">
-        <h1 class="header-title">🔐 車検証処理ツール</h1>
+        <h1 class="header-title">🔐 業務支援ツール</h1>
         <p class="header-subtitle">あさひ国際会計株式会社 | ログイン</p>
     </div>
     """, unsafe_allow_html=True)
@@ -171,21 +172,8 @@ def main():
     # ヘッダー
     st.markdown("""
     <div class="header-container">
-        <h1 class="header-title">🚗 車検証処理ツール</h1>
-        <p class="header-subtitle">あさひ国際会計株式会社 | 車検証から車両台帳を自動生成</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 使い方ガイド
-    st.markdown("""
-    <div class="card">
-        <div class="card-title">📖 使い方</div>
-        <p>
-        <strong>1.</strong> 会社名を入力<br>
-        <strong>2.</strong> 車検証ファイルをアップロード（JPG/PNG/PDF、複数可）<br>
-        <strong>3.</strong> 「車両台帳を生成」ボタンをクリック<br>
-        <strong>4.</strong> 生成されたExcelファイルをダウンロード
-        </p>
+        <h1 class="header-title">📊 業務支援ツール</h1>
+        <p class="header-subtitle">あさひ国際会計株式会社 | 車検証処理・財務諸表処理</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -210,6 +198,34 @@ def main():
         **処理時間:**
         - 1ファイルあたり約30秒
         """)
+
+    # タブナビゲーション
+    tab1, tab2 = st.tabs(["🚗 車両処理", "📊 財務処理"])
+
+    # ========== タブ1: 車両処理 ==========
+    with tab1:
+        vehicle_processing_tab()
+
+    # ========== タブ2: 財務処理 ==========
+    with tab2:
+        financial_processing_tab()
+
+
+def vehicle_processing_tab():
+    """車両処理タブ"""
+
+    # 使い方ガイド
+    st.markdown("""
+    <div class="card">
+        <div class="card-title">📖 使い方</div>
+        <p>
+        <strong>1.</strong> 会社名を入力<br>
+        <strong>2.</strong> 車検証ファイルをアップロード（JPG/PNG/PDF、複数可）<br>
+        <strong>3.</strong> 「車両台帳を生成」ボタンをクリック<br>
+        <strong>4.</strong> 生成されたExcelファイルをダウンロード
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # メイン入力エリア
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -317,6 +333,199 @@ def main():
                     label="📥 車両台帳をダウンロード",
                     data=excel_bytes,
                     file_name=f"車両台帳_{company_name}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+
+                st.balloons()
+
+            except Exception as e:
+                st.markdown(f"""
+                <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; border-radius: 5px;">
+                    <h4 style="margin: 0; color: #991b1b;">❌ エラーが発生しました</h4>
+                    <p style="margin: 0.5rem 0 0 0; color: #7f1d1d;">{str(e)}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                with st.expander("詳細なエラー情報"):
+                    st.exception(e)
+
+                st.info("💡 問題が解決しない場合は、管理者に連絡してください。")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def financial_processing_tab():
+    """財務処理タブ"""
+
+    # 使い方ガイド
+    st.markdown("""
+    <div class="card">
+        <div class="card-title">📖 使い方</div>
+        <p>
+        <strong>1.</strong> 会社名を入力<br>
+        <strong>2.</strong> 各期の決算書PDFをアップロード（最小構成: 表紙、PL、BS、販管費、原価内訳）<br>
+        <strong>3.</strong> 科目明細PDF（最新期のみ）をアップロード<br>
+        <strong>4.</strong> 「財務概要を生成」ボタンをクリック<br>
+        <strong>5.</strong> 生成されたExcelファイルをダウンロード
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 会社名入力
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📝 会社情報</div>', unsafe_allow_html=True)
+
+    company_name = st.text_input(
+        "会社名（必須）",
+        placeholder="例: 株式会社野木工業",
+        help="財務概要Excelのファイル名に使用されます",
+        label_visibility="collapsed",
+        key="financial_company_name"
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # 決算書PDFアップロード（3期分）
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📎 決算書PDF（3期分）</div>', unsafe_allow_html=True)
+
+    st.markdown("**💡 ヒント:** 古い期から順番にアップロードしてください（Period 1 → Period 2 → Period 3）")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("**Period 1（最古）**")
+        period1_pdf = st.file_uploader(
+            "Period 1 PDF",
+            type=['pdf'],
+            help="最も古い期の決算書PDF",
+            label_visibility="collapsed",
+            key="period1"
+        )
+
+    with col2:
+        st.markdown("**Period 2（中間）**")
+        period2_pdf = st.file_uploader(
+            "Period 2 PDF",
+            type=['pdf'],
+            help="中間期の決算書PDF",
+            label_visibility="collapsed",
+            key="period2"
+        )
+
+    with col3:
+        st.markdown("**Period 3（最新）**")
+        period3_pdf = st.file_uploader(
+            "Period 3 PDF",
+            type=['pdf'],
+            help="最新期の決算書PDF",
+            label_visibility="collapsed",
+            key="period3"
+        )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # 科目明細PDFアップロード
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📎 科目明細PDF（最新期のみ）</div>', unsafe_allow_html=True)
+
+    account_details_pdf = st.file_uploader(
+        "科目明細PDF",
+        type=['pdf'],
+        help="最新期の科目明細PDF",
+        label_visibility="collapsed",
+        key="account_details"
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # アップロード状況表示
+    uploaded_count = sum([
+        1 if period1_pdf else 0,
+        1 if period2_pdf else 0,
+        1 if period3_pdf else 0,
+        1 if account_details_pdf else 0
+    ])
+
+    if uploaded_count > 0:
+        st.markdown(f"""
+        <div class="success-box">
+            ✅ <strong>{uploaded_count}件</strong>のファイルがアップロードされました
+        </div>
+        """, unsafe_allow_html=True)
+
+    # 生成ボタン
+    if not company_name:
+        st.markdown("""
+        <div class="info-box">
+            ⚠️ 会社名を入力してください
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    if not any([period1_pdf, period2_pdf, period3_pdf]):
+        st.markdown("""
+        <div class="info-box">
+            ℹ️ 少なくとも1期分の決算書PDFをアップロードしてください
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    # 処理実行
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        if st.button("🚀 財務概要を生成する", type="primary", use_container_width=True):
+            try:
+                # プログレスバー表示
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+
+                status_text.text("処理を開始しています...")
+                progress_bar.progress(10)
+
+                # プロセッサ初期化
+                processor = FinancialProcessorWeb()
+                progress_bar.progress(20)
+
+                # 各期の処理
+                status_text.text("決算書を解析中...")
+                progress_bar.progress(30)
+
+                # Excel生成
+                excel_bytes = processor.process_uploaded_files(
+                    period1_pdf,
+                    period2_pdf,
+                    period3_pdf,
+                    account_details_pdf,
+                    company_name
+                )
+
+                progress_bar.progress(90)
+                status_text.text("Excelファイルを生成中...")
+
+                # 完了
+                progress_bar.progress(100)
+                status_text.empty()
+                progress_bar.empty()
+
+                # 成功メッセージ
+                st.markdown(f"""
+                <div class="success-box">
+                    <h3 style="margin: 0; color: #065f46;">✅ 処理完了！</h3>
+                    <p style="margin: 0.5rem 0 0 0;">{uploaded_count}件のファイルを処理しました</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # ダウンロードボタン
+                st.download_button(
+                    label="📥 財務概要をダウンロード",
+                    data=excel_bytes,
+                    file_name=f"財務概要_{company_name}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True
                 )
