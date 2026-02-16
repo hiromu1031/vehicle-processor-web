@@ -359,8 +359,12 @@ def vehicle_processing_tab():
 def financial_processing_tab():
     """財務処理タブ"""
 
-    # 使い方ガイド
-    st.markdown("""
+    try:
+        # デバッグ用：関数が呼ばれていることを確認
+        st.write("財務処理タブが読み込まれました")
+
+        # 使い方ガイド
+        st.markdown("""
     <div class="card">
         <div class="card-title">📖 使い方</div>
         <p>
@@ -546,7 +550,11 @@ def financial_processing_tab():
 
                 st.info("💡 問題が解決しない場合は、管理者に連絡してください。")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    except Exception as e:
+        st.error(f"財務処理タブの読み込み中にエラーが発生しました: {str(e)}")
+        st.exception(e)
 
 
 if __name__ == "__main__":
