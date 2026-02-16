@@ -7,11 +7,108 @@ from webapp.vehicle_processor_web import VehicleProcessorWeb
 
 # ページ設定
 st.set_page_config(
-    page_title="車検証処理ツール",
+    page_title="車検証処理ツール | あさひ国際会計",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# カスタムCSS
+st.markdown("""
+<style>
+    /* メインコンテナ */
+    .main {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    /* ヘッダースタイル */
+    .header-container {
+        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-title {
+        color: white;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        text-align: center;
+    }
+
+    .header-subtitle {
+        color: #e0e7ff;
+        font-size: 1.1rem;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+
+    /* カードスタイル */
+    .card {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+        color: #1e3c72;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    /* ボタンスタイル */
+    .stButton > button {
+        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(30, 60, 114, 0.3);
+    }
+
+    /* アップロードエリア */
+    .uploadedFile {
+        border-left: 4px solid #2a5298;
+        padding-left: 1rem;
+    }
+
+    /* プログレスバー */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+    }
+
+    /* インフォメーション */
+    .info-box {
+        background: #e0e7ff;
+        border-left: 4px solid #2a5298;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+    }
+
+    /* 成功メッセージ */
+    .success-box {
+        background: #d1fae5;
+        border-left: 4px solid #10b981;
+        padding: 1rem;
+        border-radius: 5px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 def check_password():
     """パスワード認証をチェック"""
@@ -22,17 +119,27 @@ def check_password():
         return True
 
     # 認証画面
-    st.title("🔐 車検証処理ツール - ログイン")
-    st.markdown("---")
+    st.markdown("""
+    <div class="header-container">
+        <h1 class="header-title">🔐 車検証処理ツール</h1>
+        <p class="header-subtitle">あさひ国際会計株式会社 | ログイン</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="card-title">🔑 認証</div>', unsafe_allow_html=True)
+
         password = st.text_input(
             "パスワードを入力してください",
             type="password",
-            placeholder="パスワード"
+            placeholder="パスワード",
+            label_visibility="collapsed"
         )
+
+        st.markdown("<br>", unsafe_allow_html=True)
 
         if st.button("ログイン", type="primary", use_container_width=True):
             try:
@@ -47,6 +154,8 @@ def check_password():
             else:
                 st.error("❌ パスワードが正しくありません")
 
+        st.markdown('</div>', unsafe_allow_html=True)
+
         st.info("💡 社内メンバーの方は、共有されたパスワードを入力してください。")
 
     return False
@@ -60,17 +169,25 @@ def main():
         st.stop()
 
     # ヘッダー
-    st.title("🚗 車検証処理ツール")
     st.markdown("""
-    車検証の画像またはPDFをアップロードすると、自動的に車両台帳Excelを生成します。
+    <div class="header-container">
+        <h1 class="header-title">🚗 車検証処理ツール</h1>
+        <p class="header-subtitle">あさひ国際会計株式会社 | 車検証から車両台帳を自動生成</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    **使い方:**
-    1. 会社名を入力
-    2. 車検証ファイルをアップロード（複数可）
-    3. 「車両台帳を生成」ボタンをクリック
-    4. 生成されたExcelファイルをダウンロード
-    """)
-    st.markdown("---")
+    # 使い方ガイド
+    st.markdown("""
+    <div class="card">
+        <div class="card-title">📖 使い方</div>
+        <p>
+        <strong>1.</strong> 会社名を入力<br>
+        <strong>2.</strong> 車検証ファイルをアップロード（JPG/PNG/PDF、複数可）<br>
+        <strong>3.</strong> 「車両台帳を生成」ボタンをクリック<br>
+        <strong>4.</strong> 生成されたExcelファイルをダウンロード
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # サイドバーにログアウトボタン
     with st.sidebar:
@@ -95,49 +212,67 @@ def main():
         """)
 
     # メイン入力エリア
-    col1, col2 = st.columns([1, 1])
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📝 会社情報</div>', unsafe_allow_html=True)
 
-    with col1:
-        company_name = st.text_input(
-            "📝 会社名（必須）",
-            placeholder="例: 株式会社野木工業",
-            help="車両台帳Excelのファイル名に使用されます"
-        )
+    company_name = st.text_input(
+        "会社名（必須）",
+        placeholder="例: 株式会社野木工業",
+        help="車両台帳Excelのファイル名に使用されます",
+        label_visibility="collapsed"
+    )
 
-    with col2:
-        st.markdown("&nbsp;")  # スペース調整
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # ファイルアップロード
+    # ファイルアップロードエリア
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📎 車検証ファイル</div>', unsafe_allow_html=True)
+
     uploaded_files = st.file_uploader(
-        "📎 車検証ファイルをアップロード（複数選択可）",
+        "車検証ファイルをアップロード",
         type=['jpg', 'jpeg', 'png', 'pdf'],
         accept_multiple_files=True,
-        help="複数のファイルを一度にアップロードできます"
+        help="複数のファイルを一度にアップロードできます（JPG、PNG、PDF対応）",
+        label_visibility="collapsed"
     )
 
     # ファイル情報表示
     if uploaded_files:
-        st.success(f"✅ {len(uploaded_files)}件のファイルがアップロードされました")
-        with st.expander("📋 アップロードされたファイル一覧"):
+        st.markdown(f"""
+        <div class="success-box">
+            ✅ <strong>{len(uploaded_files)}件</strong>のファイルがアップロードされました
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.expander("📋 アップロードされたファイル一覧を表示"):
             for idx, file in enumerate(uploaded_files, 1):
                 file_size_mb = file.size / (1024 * 1024)
-                st.write(f"{idx}. {file.name} ({file_size_mb:.2f} MB)")
+                st.write(f"**{idx}.** {file.name} `({file_size_mb:.2f} MB)`")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # 生成ボタン
-    st.markdown("---")
-
     if not company_name:
-        st.warning("⚠️ 会社名を入力してください")
+        st.markdown("""
+        <div class="info-box">
+            ⚠️ 会社名を入力してください
+        </div>
+        """, unsafe_allow_html=True)
         st.stop()
 
     if not uploaded_files:
-        st.info("ℹ️ 車検証ファイルをアップロードしてください")
+        st.markdown("""
+        <div class="info-box">
+            ℹ️ 車検証ファイルをアップロードしてください
+        </div>
+        """, unsafe_allow_html=True)
         st.stop()
 
     # 処理実行
-    col1, col2, col3 = st.columns([1, 2, 1])
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 3, 1])
     with col2:
-        if st.button("🚀 車両台帳を生成", type="primary", use_container_width=True):
+        if st.button("🚀 車両台帳を生成する", type="primary", use_container_width=True):
             try:
                 # プログレスバー表示
                 progress_bar = st.progress(0)
@@ -168,7 +303,14 @@ def main():
                 progress_bar.empty()
 
                 # 成功メッセージ
-                st.success(f"✅ 処理完了！{len(uploaded_files)}件のファイルを処理しました。")
+                st.markdown(f"""
+                <div class="success-box">
+                    <h3 style="margin: 0; color: #065f46;">✅ 処理完了！</h3>
+                    <p style="margin: 0.5rem 0 0 0;">{len(uploaded_files)}件のファイルを処理しました</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
 
                 # ダウンロードボタン
                 st.download_button(
@@ -182,9 +324,19 @@ def main():
                 st.balloons()
 
             except Exception as e:
-                st.error(f"❌ エラーが発生しました: {str(e)}")
-                st.exception(e)
+                st.markdown(f"""
+                <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; border-radius: 5px;">
+                    <h4 style="margin: 0; color: #991b1b;">❌ エラーが発生しました</h4>
+                    <p style="margin: 0.5rem 0 0 0; color: #7f1d1d;">{str(e)}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                with st.expander("詳細なエラー情報"):
+                    st.exception(e)
+
                 st.info("💡 問題が解決しない場合は、管理者に連絡してください。")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
