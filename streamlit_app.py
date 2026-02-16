@@ -24,15 +24,16 @@ st.markdown("""
 
     /* ヘッダースタイル */
     .header-container {
-        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+        background: white;
         padding: 2rem;
         border-radius: 10px;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: 2px solid #1e3c72;
     }
 
     .header-title {
-        color: white;
+        color: #1e3c72;
         font-size: 2.5rem;
         font-weight: 700;
         margin: 0;
@@ -40,7 +41,7 @@ st.markdown("""
     }
 
     .header-subtitle {
-        color: #e0e7ff;
+        color: #4a5568;
         font-size: 1.1rem;
         text-align: center;
         margin-top: 0.5rem;
