@@ -5,13 +5,15 @@ import os
 from pathlib import Path
 
 # Claude API設定
-# Streamlit Secretsから取得を試み、フォールバックとして環境変数を使用
-try:
-    import streamlit as st
-    ANTHROPIC_API_KEY = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
-except ImportError:
-    # Streamlitがインポートできない場合（CLI実行時）
-    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+# 環境変数を優先、フォールバックとしてStreamlit Secretsを使用
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+if not ANTHROPIC_API_KEY:
+    try:
+        import streamlit as st
+        ANTHROPIC_API_KEY = st.secrets.get("ANTHROPIC_API_KEY")
+    except:
+        pass
 
 if not ANTHROPIC_API_KEY:
     raise ValueError("環境変数 ANTHROPIC_API_KEY が設定されていません")
