@@ -3,6 +3,7 @@
 車検証処理、財務諸表処理など複数の機能を提供
 """
 import streamlit as st
+import streamlit.components.v1 as components
 from webapp.vehicle_processor_web import VehicleProcessorWeb
 from webapp.financial_processor_web import FinancialProcessorWeb
 from webapp.pdf_splitter_web import PDFSplitterWeb
@@ -112,6 +113,33 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+def show_notification(title: str, message: str):
+    """ブラウザ通知を表示"""
+    notification_html = f"""
+    <script>
+        // 通知の許可を要求
+        if (Notification.permission === "granted") {{
+            new Notification("{title}", {{
+                body: "{message}",
+                icon: "📊",
+                requireInteraction: true
+            }});
+        }} else if (Notification.permission !== "denied") {{
+            Notification.requestPermission().then(function (permission) {{
+                if (permission === "granted") {{
+                    new Notification("{title}", {{
+                        body: "{message}",
+                        icon: "📊",
+                        requireInteraction: true
+                    }});
+                }}
+            }});
+        }}
+    </script>
+    """
+    components.html(notification_html, height=0)
+
 
 def check_password():
     """パスワード認証をチェック"""
@@ -677,6 +705,12 @@ def pdf_splitter_tab():
 
                 st.success(f"✅ 完了！{len(page_analysis)}ページを解析し、PDFを生成しました")
                 st.balloons()
+
+                # ブラウザ通知を表示
+                show_notification(
+                    "PDF生成完了！",
+                    f"{len(page_analysis)}ページを処理しました。ダウンロードの準備ができています。"
+                )
 
             except Exception as e:
                 st.error(f"❌ エラーが発生しました: {str(e)}")
