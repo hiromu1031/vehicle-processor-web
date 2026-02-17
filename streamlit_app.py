@@ -200,11 +200,12 @@ def main():
         - 1ファイルあたり約30秒
         """)
 
-    # 機能選択（ラジオボタン）
+    # 機能選択（ラジオボタン）- 財務処理を先に
     st.markdown('<div class="card">', unsafe_allow_html=True)
     selected_function = st.radio(
         "処理機能を選択してください",
-        ["🚗 車両処理", "📊 財務処理"],
+        ["📊 財務処理", "🚗 車両処理"],
+        index=1,  # デフォルトで車両処理を選択
         horizontal=True,
         label_visibility="collapsed"
     )
@@ -213,10 +214,10 @@ def main():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # 選択された機能を表示
-    if selected_function == "🚗 車両処理":
-        vehicle_processing_tab()
-    elif selected_function == "📊 財務処理":
+    if selected_function == "📊 財務処理":
         financial_processing_tab()
+    elif selected_function == "🚗 車両処理":
+        vehicle_processing_tab()
 
 
 def vehicle_processing_tab():
