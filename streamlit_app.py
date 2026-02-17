@@ -675,7 +675,7 @@ def pdf_splitter_tab():
                 # ページ解析（元のファイルを使用 - PDF圧縮は重すぎるため無効化）
                 status_text.text(f"ページを解析中... (0/{len(uploaded_pdfs)} files)")
 
-                page_analysis = processor.analyze_pdfs(uploaded_pdfs)
+                page_analysis, pdf_cache = processor.analyze_pdfs(uploaded_pdfs)
 
                 progress_bar.progress(60)
                 status_text.text("解析完了！PDFを生成中...")
@@ -688,7 +688,7 @@ def pdf_splitter_tab():
                 progress_bar.progress(70)
 
                 zip_bytes = processor.split_and_merge_pdfs(
-                    uploaded_pdfs,
+                    pdf_cache,
                     page_analysis
                 )
 

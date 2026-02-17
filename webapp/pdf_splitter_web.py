@@ -70,7 +70,7 @@ class PDFSplitterWeb:
             # 圧縮に失敗した場合は元のPDFを返す
             return pdf_bytes
 
-    def analyze_pdfs(self, uploaded_files: List) -> List[Dict[str, Any]]:
+    def analyze_pdfs(self, uploaded_files: List) -> Tuple[List[Dict[str, Any]], Dict[str, bytes]]:
         """
         アップロードされたPDFファイルを解析し、各ページの情報を取得
 
@@ -92,10 +92,14 @@ class PDFSplitterWeb:
             ]
         """
         all_pages = []
+        pdf_cache = {}  # ファイル名とバイトデータのキャッシュ
 
         for uploaded_file in uploaded_files:
             file_bytes = uploaded_file.read()
             file_name = uploaded_file.name
+
+            # バイトデータをキャッシュ
+            pdf_cache[file_name] = file_bytes
 
             # PDFを開く
             pdf_document = fitz.open(stream=file_bytes, filetype="pdf")
@@ -138,18 +142,18 @@ class PDFSplitterWeb:
 
             pdf_document.close()
 
-        return all_pages
+        return all_pages, pdf_cache
 
     def split_and_merge_pdfs(
         self,
-        uploaded_files: List,
+        pdf_cache: Dict[str, bytes],
         page_analysis: List[Dict[str, Any]]
     ) -> BytesIO:
         """
         解析結果をもとに、PDFを期ごと・資料種類ごとに分割・統合
 
         Args:
-            uploaded_files: Streamlit UploadedFileのリスト
+            pdf_cache: ファイル名とバイトデータのマッピング
             page_analysis: analyze_pdfs()の結果
 
         Returns:
@@ -157,9 +161,8 @@ class PDFSplitterWeb:
         """
         # ファイル名とPDFドキュメントのマッピングを作成
         pdf_docs = {}
-        for uploaded_file in uploaded_files:
-            file_bytes = uploaded_file.read()
-            pdf_docs[uploaded_file.name] = fitz.open(stream=file_bytes, filetype="pdf")
+        for file_name, file_bytes in pdf_cache.items():
+            pdf_docs[file_name] = fitz.open(stream=file_bytes, filetype="pdf")
 
         # 期ごと・資料種類ごとにページをグルーピング
         grouped_pages = self._group_pages_by_period(page_analysis)
