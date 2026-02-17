@@ -200,22 +200,22 @@ def main():
         - 1ファイルあたり約30秒
         """)
 
-    # タブナビゲーション
-    tab1, tab2 = st.tabs(["🚗 車両処理", "📊 財務処理"])
+    # タブナビゲーション（順番を入れ替えてテスト）
+    tab1, tab2 = st.tabs(["📊 財務処理", "🚗 車両処理"])
 
-    # ========== タブ1: 車両処理 ==========
+    # ========== タブ1: 財務処理（1番目に移動） ==========
     with tab1:
-        vehicle_processing_tab()
-
-    # ========== タブ2: 財務処理 ==========
-    with tab2:
-        st.success("✅ 財務処理タブが開かれました！")
+        st.success("✅ 財務処理タブが開かれました！（1番目のタブとして表示）")
         st.write("---")
         try:
             financial_processing_tab()
         except Exception as e:
             st.error(f"❌ 財務処理タブの読み込みエラー: {str(e)}")
             st.exception(e)
+
+    # ========== タブ2: 車両処理（2番目に移動） ==========
+    with tab2:
+        vehicle_processing_tab()
 
 
 def vehicle_processing_tab():
