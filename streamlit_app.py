@@ -672,10 +672,53 @@ def pdf_splitter_tab():
                 processor = PDFSplitterWeb()
                 progress_bar.progress(15)
 
-                # ページ解析
-                status_text.text(f"ページを解析中... (0/{len(uploaded_pdfs)} files)")
+                # PDFを圧縮
+                status_text.text("PDFファイルを圧縮中...")
+                compressed_files = []
 
-                page_analysis = processor.analyze_pdfs(uploaded_pdfs)
+                for idx, uploaded_file in enumerate(uploaded_pdfs, 1):
+                    status_text.text(f"PDFを圧縮中... ({idx}/{len(uploaded_pdfs)} files)")
+                    progress_bar.progress(15 + (idx * 15 // len(uploaded_pdfs)))
+
+                    # ファイルを読み込み
+                    file_bytes = uploaded_file.read()
+                    original_size_mb = len(file_bytes) / (1024 * 1024)
+
+                    # 圧縮
+                    compressed_bytes = processor.compress_pdf(file_bytes)
+                    compressed_size_mb = len(compressed_bytes) / (1024 * 1024)
+
+                    print(f"{uploaded_file.name}: {original_size_mb:.2f}MB → {compressed_size_mb:.2f}MB")
+
+                    # 圧縮後のファイルを保持
+                    compressed_files.append({
+                        'name': uploaded_file.name,
+                        'bytes': compressed_bytes
+                    })
+
+                progress_bar.progress(30)
+                status_text.text("圧縮完了！ページを解析中...")
+
+                # 圧縮後のファイルをByteIOオブジェクトに変換
+                from io import BytesIO
+
+                class FakeUploadedFile:
+                    def __init__(self, name, bytes_data):
+                        self.name = name
+                        self._bytes = bytes_data
+
+                    def read(self):
+                        return self._bytes
+
+                compressed_file_objects = [
+                    FakeUploadedFile(f['name'], f['bytes'])
+                    for f in compressed_files
+                ]
+
+                # ページ解析（圧縮後のファイルを使用）
+                status_text.text(f"ページを解析中... (0/{len(compressed_file_objects)} files)")
+
+                page_analysis = processor.analyze_pdfs(compressed_file_objects)
 
                 progress_bar.progress(60)
                 status_text.text("解析完了！PDFを生成中...")
@@ -688,7 +731,7 @@ def pdf_splitter_tab():
                 progress_bar.progress(70)
 
                 zip_bytes = processor.split_and_merge_pdfs(
-                    uploaded_pdfs,
+                    compressed_file_objects,
                     page_analysis
                 )
 

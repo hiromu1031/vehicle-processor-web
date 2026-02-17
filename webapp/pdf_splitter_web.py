@@ -17,6 +17,55 @@ class PDFSplitterWeb:
     def __init__(self):
         self.claude_client = ClaudeClient()
 
+    def compress_pdf(self, pdf_bytes: bytes) -> bytes:
+        """
+        PDFファイルを圧縮
+
+        Args:
+            pdf_bytes: 元のPDFファイルのバイトデータ
+
+        Returns:
+            圧縮後のPDFファイルのバイトデータ
+        """
+        try:
+            # PDFを開く
+            pdf_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+            # 新しいPDFを作成
+            compressed_doc = fitz.open()
+
+            # 各ページを低解像度で再レンダリング
+            for page in pdf_doc:
+                # ページを画像として取得（解像度を下げる）
+                pix = page.get_pixmap(matrix=fitz.Matrix(1.0, 1.0), alpha=False)
+
+                # 画像をJPEGに変換（圧縮）
+                img_bytes = pix.tobytes("jpeg", quality=75)
+
+                # 新しいページを作成
+                img_pdf = fitz.open("pdf", img_bytes)
+                compressed_doc.insert_pdf(img_pdf)
+                img_pdf.close()
+
+            # メタデータをクリア
+            compressed_doc.set_metadata({})
+
+            # PDFをバイトデータとして保存
+            compressed_bytes = compressed_doc.tobytes(
+                garbage=4,  # ガベージコレクションを実行
+                deflate=True,  # 圧縮を有効化
+            )
+
+            compressed_doc.close()
+            pdf_doc.close()
+
+            return compressed_bytes
+
+        except Exception as e:
+            print(f"PDF圧縮エラー: {str(e)}")
+            # 圧縮に失敗した場合は元のPDFを返す
+            return pdf_bytes
+
     def analyze_pdfs(self, uploaded_files: List) -> List[Dict[str, Any]]:
         """
         アップロードされたPDFファイルを解析し、各ページの情報を取得
