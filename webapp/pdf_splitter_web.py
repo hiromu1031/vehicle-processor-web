@@ -49,23 +49,39 @@ class PDFSplitterWeb:
 
             # 各ページを解析
             for page_num in range(len(pdf_document)):
-                page = pdf_document[page_num]
+                try:
+                    page = pdf_document[page_num]
 
-                # ページを画像に変換
-                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2倍の解像度
-                img_bytes = pix.tobytes("png")
+                    # ページを画像に変換（解像度を下げて軽量化）
+                    pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))  # 1.5倍の解像度
+                    img_bytes = pix.tobytes("jpeg", quality=85)  # JPEGで圧縮
 
-                # Claude APIでページ内容を解析
-                page_info = self.claude_client.analyze_image_bytes(
-                    img_bytes,
-                    f"{file_name}_page_{page_num + 1}.png",
-                    self._get_page_analysis_prompt()
-                )
+                    # 画像サイズをチェック（5MB以上なら警告）
+                    img_size_mb = len(img_bytes) / (1024 * 1024)
+                    if img_size_mb > 5:
+                        print(f"警告: {file_name} p.{page_num + 1} の画像サイズが大きすぎます: {img_size_mb:.2f}MB")
+                        # さらに解像度を下げる
+                        pix = page.get_pixmap(matrix=fitz.Matrix(1.0, 1.0))
+                        img_bytes = pix.tobytes("jpeg", quality=70)
 
-                if isinstance(page_info, dict) and not page_info.get("error"):
-                    page_info["file_name"] = file_name
-                    page_info["page_num"] = page_num
-                    all_pages.append(page_info)
+                    # Claude APIでページ内容を解析
+                    page_info = self.claude_client.analyze_image_bytes(
+                        img_bytes,
+                        f"{file_name}_page_{page_num + 1}.jpg",
+                        self._get_page_analysis_prompt()
+                    )
+
+                    if isinstance(page_info, dict) and not page_info.get("error"):
+                        page_info["file_name"] = file_name
+                        page_info["page_num"] = page_num
+                        all_pages.append(page_info)
+                    else:
+                        # エラーが発生した場合もページ情報を保持
+                        print(f"ページ解析エラー: {file_name} p.{page_num + 1}: {page_info.get('error', '不明なエラー')}")
+
+                except Exception as e:
+                    print(f"ページ処理エラー: {file_name} p.{page_num + 1}: {str(e)}")
+                    # エラーが発生してもスキップして次のページへ
 
             pdf_document.close()
 

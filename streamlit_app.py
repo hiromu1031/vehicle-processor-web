@@ -714,7 +714,22 @@ def pdf_splitter_tab():
 
             except Exception as e:
                 st.error(f"❌ エラーが発生しました: {str(e)}")
-                st.exception(e)
+
+                # より詳細なエラー情報を表示
+                with st.expander("詳細なエラー情報"):
+                    st.write("**エラーの種類:**")
+                    st.write(type(e).__name__)
+                    st.write("**エラーメッセージ:**")
+                    st.write(str(e))
+                    st.exception(e)
+
+                # 対処方法を提案
+                st.info("""
+                💡 **対処方法:**
+                - PDFファイルのサイズが大きすぎる可能性があります
+                - ファイル数を減らして試してみてください（1-2個ずつ）
+                - または、PDFのページ数が少ないファイルで試してみてください
+                """)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
