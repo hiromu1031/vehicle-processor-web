@@ -200,15 +200,22 @@ def main():
         - 1ファイルあたり約30秒
         """)
 
-    # タブナビゲーション
-    tab1, tab2 = st.tabs(["🚗 車両処理", "📊 財務処理"])
+    # 機能選択（ラジオボタン）
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    selected_function = st.radio(
+        "処理機能を選択してください",
+        ["🚗 車両処理", "📊 財務処理"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # ========== タブ1: 車両処理 ==========
-    with tab1:
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 選択された機能を表示
+    if selected_function == "🚗 車両処理":
         vehicle_processing_tab()
-
-    # ========== タブ2: 財務処理 ==========
-    with tab2:
+    elif selected_function == "📊 財務処理":
         financial_processing_tab()
 
 
