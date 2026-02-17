@@ -39,13 +39,17 @@ class PDFSplitterWeb:
                 # ページを画像として取得（解像度を下げる）
                 pix = page.get_pixmap(matrix=fitz.Matrix(1.0, 1.0), alpha=False)
 
-                # 画像をJPEGに変換（圧縮）
-                img_bytes = pix.tobytes("jpeg", quality=75)
+                # 新しいページを作成（元のページサイズを維持）
+                new_page = compressed_doc.new_page(
+                    width=page.rect.width,
+                    height=page.rect.height
+                )
 
-                # 新しいページを作成
-                img_pdf = fitz.open("pdf", img_bytes)
-                compressed_doc.insert_pdf(img_pdf)
-                img_pdf.close()
+                # 画像をページに挿入
+                new_page.insert_image(
+                    new_page.rect,
+                    pixmap=pix
+                )
 
             # メタデータをクリア
             compressed_doc.set_metadata({})
