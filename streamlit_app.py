@@ -209,7 +209,11 @@ def main():
 
     # ========== タブ2: 財務処理 ==========
     with tab2:
-        financial_processing_tab()
+        try:
+            financial_processing_tab()
+        except Exception as e:
+            st.error(f"❌ 財務処理タブの読み込みエラー: {str(e)}")
+            st.exception(e)
 
 
 def vehicle_processing_tab():
