@@ -626,7 +626,7 @@ def pdf_splitter_tab():
 
     col1, col2, col3 = st.columns([1, 3, 1])
     with col2:
-        if st.button("🔍 ページを解析する", type="primary", use_container_width=True):
+        if st.button("🔍 ページを解析してPDF生成", type="primary", use_container_width=True):
             # ボタンクリック時にファイルの有無をチェック
             if not uploaded_pdfs:
                 st.error("❌ PDFファイルをアップロードしてください")
@@ -642,25 +642,41 @@ def pdf_splitter_tab():
 
                 # プロセッサ初期化
                 processor = PDFSplitterWeb()
-                progress_bar.progress(20)
+                progress_bar.progress(15)
 
                 # ページ解析
                 status_text.text(f"ページを解析中... (0/{len(uploaded_pdfs)} files)")
 
                 page_analysis = processor.analyze_pdfs(uploaded_pdfs)
 
-                progress_bar.progress(90)
-                status_text.text("解析結果を整理中...")
+                progress_bar.progress(60)
+                status_text.text("解析完了！PDFを生成中...")
 
                 # セッションステートに保存
                 st.session_state.page_analysis = page_analysis
+
+                # 自動的にPDF生成も実行
+                status_text.text("PDFを分割・統合しています...")
+                progress_bar.progress(70)
+
+                zip_bytes = processor.split_and_merge_pdfs(
+                    uploaded_pdfs,
+                    page_analysis
+                )
+
+                progress_bar.progress(95)
+                status_text.text("ZIPファイルを作成中...")
+
+                # セッションステートに保存
+                st.session_state.zip_bytes = zip_bytes
 
                 # 完了
                 progress_bar.progress(100)
                 status_text.empty()
                 progress_bar.empty()
 
-                st.success(f"✅ 解析完了！{len(page_analysis)}ページを解析しました")
+                st.success(f"✅ 完了！{len(page_analysis)}ページを解析し、PDFを生成しました")
+                st.balloons()
 
             except Exception as e:
                 st.error(f"❌ エラーが発生しました: {str(e)}")
@@ -668,7 +684,35 @@ def pdf_splitter_tab():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 解析結果表示
+    # ダウンロードボタン（解析とPDF生成が完了している場合）
+    if 'zip_bytes' in st.session_state and st.session_state.zip_bytes:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+
+        # 成功メッセージ
+        st.markdown(f"""
+        <div class="success-box">
+            <h3 style="margin: 0; color: #065f46;">✅ PDF生成完了！</h3>
+            <p style="margin: 0.5rem 0 0 0;">期ごとに整理されたPDFファイルをZIPにまとめました</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # 大きなダウンロードボタン
+        col1, col2, col3 = st.columns([1, 3, 1])
+        with col2:
+            st.download_button(
+                label="📥 ZIPファイルをダウンロード",
+                data=st.session_state.zip_bytes,
+                file_name="決算書_整理済み.zip",
+                mime="application/zip",
+                use_container_width=True,
+                type="primary"
+            )
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # 解析結果表示（詳細）
     if st.session_state.page_analysis:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown('<div class="card-title">📊 解析結果</div>', unsafe_allow_html=True)
@@ -694,61 +738,6 @@ def pdf_splitter_tab():
                     - **{doc_type}**: `{file_name}` p.{page_num}
                       - {summary}
                     """)
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # PDF生成ボタン
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 3, 1])
-        with col2:
-            if st.button("📦 PDFを分割・統合して生成", type="primary", use_container_width=True):
-                try:
-                    # プログレスバー表示
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-
-                    status_text.text("PDFを生成中...")
-                    progress_bar.progress(30)
-
-                    # PDF分割・統合
-                    processor = PDFSplitterWeb()
-                    zip_bytes = processor.split_and_merge_pdfs(
-                        uploaded_pdfs,
-                        st.session_state.page_analysis
-                    )
-
-                    progress_bar.progress(90)
-                    status_text.text("ZIPファイルを作成中...")
-
-                    # 完了
-                    progress_bar.progress(100)
-                    status_text.empty()
-                    progress_bar.empty()
-
-                    # 成功メッセージ
-                    st.markdown(f"""
-                    <div class="success-box">
-                        <h3 style="margin: 0; color: #065f46;">✅ 生成完了！</h3>
-                        <p style="margin: 0.5rem 0 0 0;">期ごとに整理されたPDFファイルをZIPにまとめました</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    st.markdown("<br>", unsafe_allow_html=True)
-
-                    # ダウンロードボタン
-                    st.download_button(
-                        label="📥 ZIPファイルをダウンロード",
-                        data=zip_bytes,
-                        file_name="決算書_整理済み.zip",
-                        mime="application/zip",
-                        use_container_width=True
-                    )
-
-                    st.balloons()
-
-                except Exception as e:
-                    st.error(f"❌ エラーが発生しました: {str(e)}")
-                    st.exception(e)
 
         st.markdown('</div>', unsafe_allow_html=True)
 
