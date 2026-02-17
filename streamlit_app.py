@@ -6,7 +6,6 @@ import streamlit as st
 import streamlit.components.v1 as components
 from webapp.vehicle_processor_web import VehicleProcessorWeb
 from webapp.financial_processor_web import FinancialProcessorWeb
-from webapp.pdf_splitter_web import PDFSplitterWeb
 
 # ページ設定
 st.set_page_config(
@@ -238,7 +237,7 @@ def main():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     selected_function = st.radio(
         "処理機能を選択してください",
-        ["📊 財務処理", "🚗 車両処理", "📄 PDF分割ツール"],
+        ["📊 財務処理", "🚗 車両処理"],
         index=1,  # デフォルトで車両処理を選択
         horizontal=True,
         label_visibility="collapsed"
@@ -252,8 +251,6 @@ def main():
         financial_processing_tab()
     elif selected_function == "🚗 車両処理":
         vehicle_processing_tab()
-    elif selected_function == "📄 PDF分割ツール":
-        pdf_splitter_tab()
 
 
 def vehicle_processing_tab():
@@ -593,203 +590,7 @@ def financial_processing_tab():
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-def pdf_splitter_tab():
-    """PDF分割ツールタブ"""
-
-    # 使い方ガイド
-    st.markdown("""
-    <div class="card">
-        <div class="card-title">📖 使い方</div>
-        <p>
-        <strong>1.</strong> 決算書PDFファイルを複数アップロード（3-4個まとめてOK）<br>
-        <strong>2.</strong> 「ページを解析」ボタンをクリック<br>
-        <strong>3.</strong> 解析結果を確認（どのページが何の資料か表示されます）<br>
-        <strong>4.</strong> 「PDFを分割・統合して生成」ボタンをクリック<br>
-        <strong>5.</strong> ZIPファイルをダウンロード（期ごとに整理されたPDFが入っています）
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # PDFアップロードエリア
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">📎 決算書PDFファイル</div>', unsafe_allow_html=True)
-
-    st.markdown("""
-    **💡 ヒント:**
-    - 複数のPDFファイルをまとめてアップロードできます
-    - 期が混在していても自動的に整理されます
-    - 資料が複数PDFに分かれていても統合されます
-    """)
-
-    uploaded_pdfs = st.file_uploader(
-        "決算書PDFをアップロード",
-        type=['pdf'],
-        accept_multiple_files=True,
-        help="決算書が含まれるPDFファイルを選択してください",
-        label_visibility="collapsed",
-        key="pdf_splitter_upload"
-    )
-
-    # ファイル情報表示
-    if uploaded_pdfs:
-        st.markdown(f"""
-        <div class="success-box">
-            ✅ <strong>{len(uploaded_pdfs)}件</strong>のPDFファイルがアップロードされました
-        </div>
-        """, unsafe_allow_html=True)
-
-        with st.expander("📋 アップロードされたファイル一覧"):
-            for idx, file in enumerate(uploaded_pdfs, 1):
-                file_size_mb = file.size / (1024 * 1024)
-                st.write(f"**{idx}.** {file.name} `({file_size_mb:.2f} MB)`")
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # 解析処理
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-
-    # セッションステートで解析結果を保持
-    if 'page_analysis' not in st.session_state:
-        st.session_state.page_analysis = None
-
-    col1, col2, col3 = st.columns([1, 3, 1])
-    with col2:
-        if st.button("🔍 ページを解析してPDF生成", type="primary", use_container_width=True):
-            # ボタンクリック時にファイルの有無をチェック
-            if not uploaded_pdfs:
-                st.error("❌ PDFファイルをアップロードしてください")
-                st.stop()
-
-            try:
-                # プログレスバー表示
-                progress_bar = st.progress(0)
-                status_text = st.empty()
-
-                status_text.text("PDFファイルを読み込んでいます...")
-                progress_bar.progress(10)
-
-                # プロセッサ初期化
-                processor = PDFSplitterWeb()
-                progress_bar.progress(20)
-
-                # ページ解析（元のファイルを使用 - PDF圧縮は重すぎるため無効化）
-                status_text.text(f"ページを解析中... (0/{len(uploaded_pdfs)} files)")
-
-                page_analysis, pdf_cache = processor.analyze_pdfs(uploaded_pdfs)
-
-                progress_bar.progress(60)
-                status_text.text("解析完了！PDFを生成中...")
-
-                # セッションステートに保存
-                st.session_state.page_analysis = page_analysis
-
-                # 自動的にPDF生成も実行
-                status_text.text("PDFを分割・統合しています...")
-                progress_bar.progress(70)
-
-                zip_bytes = processor.split_and_merge_pdfs(
-                    pdf_cache,
-                    page_analysis
-                )
-
-                progress_bar.progress(95)
-                status_text.text("ZIPファイルを作成中...")
-
-                # セッションステートに保存
-                st.session_state.zip_bytes = zip_bytes
-
-                # 完了
-                progress_bar.progress(100)
-                status_text.empty()
-                progress_bar.empty()
-
-                st.success(f"✅ 完了！{len(page_analysis)}ページを解析し、PDFを生成しました")
-                st.balloons()
-
-                # ブラウザ通知を表示
-                show_notification(
-                    "PDF生成完了！",
-                    f"{len(page_analysis)}ページを処理しました。ダウンロードの準備ができています。"
-                )
-
-            except Exception as e:
-                st.error(f"❌ エラーが発生しました: {str(e)}")
-
-                # より詳細なエラー情報を表示
-                with st.expander("詳細なエラー情報"):
-                    st.write("**エラーの種類:**")
-                    st.write(type(e).__name__)
-                    st.write("**エラーメッセージ:**")
-                    st.write(str(e))
-                    st.exception(e)
-
-                # 対処方法を提案
-                st.info("""
-                💡 **対処方法:**
-                - PDFファイルのサイズが大きすぎる可能性があります
-                - ファイル数を減らして試してみてください（1-2個ずつ）
-                - または、PDFのページ数が少ないファイルで試してみてください
-                """)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # ダウンロードボタン（解析とPDF生成が完了している場合）
-    if 'zip_bytes' in st.session_state and st.session_state.zip_bytes:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-
-        # 成功メッセージ
-        st.markdown(f"""
-        <div class="success-box">
-            <h3 style="margin: 0; color: #065f46;">✅ PDF生成完了！</h3>
-            <p style="margin: 0.5rem 0 0 0;">期ごとに整理されたPDFファイルをZIPにまとめました</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # 大きなダウンロードボタン
-        col1, col2, col3 = st.columns([1, 3, 1])
-        with col2:
-            st.download_button(
-                label="📥 ZIPファイルをダウンロード",
-                data=st.session_state.zip_bytes,
-                file_name="決算書_整理済み.zip",
-                mime="application/zip",
-                use_container_width=True,
-                type="primary"
-            )
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # 解析結果表示（詳細）
-    if st.session_state.page_analysis:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown('<div class="card-title">📊 解析結果</div>', unsafe_allow_html=True)
-
-        # 期ごとにグループ化して表示
-        periods = {}
-        for page in st.session_state.page_analysis:
-            period = page.get("fiscal_period", "不明")
-            if period not in periods:
-                periods[period] = []
-            periods[period].append(page)
-
-        # 期ごとに表示
-        for period, pages in sorted(periods.items()):
-            with st.expander(f"**{period}** ({len(pages)}ページ)", expanded=True):
-                for page in pages:
-                    doc_type = page.get("document_type", "不明")
-                    file_name = page.get("file_name", "")
-                    page_num = page.get("page_num", 0) + 1
-                    summary = page.get("content_summary", "")
-
-                    st.markdown(f"""
-                    - **{doc_type}**: `{file_name}` p.{page_num}
-                      - {summary}
-                    """)
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-
 if __name__ == "__main__":
     main()
+# PDF分割ツール機能は削除されました（メモリ問題のため）
+# 必要に応じて将来的に再実装可能
