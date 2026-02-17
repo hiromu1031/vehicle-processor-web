@@ -247,14 +247,6 @@ JSONフォーマット:
 
             doc.add_paragraph()  # 空行
 
-        # フッター
-        doc.add_page_break()
-        footer_para = doc.add_paragraph()
-        footer_para.add_run('※ このレポートはClaude AIのトレーニングデータ（2025年1月まで）から自動生成されたものです。').italic = True
-        footer_para.add_run('\n※ リアルタイムのWeb検索ではないため、最新情報は含まれていない可能性があります。').italic = True
-        footer_para.add_run('\n※ 情報の正確性については、必ず公式サイト等でご確認ください。').italic = True
-        footer_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
         # BytesIOに保存
         word_buffer = BytesIO()
         doc.save(word_buffer)
