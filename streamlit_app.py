@@ -6,6 +6,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from webapp.vehicle_processor_web import VehicleProcessorWeb
 from webapp.financial_processor_web import FinancialProcessorWeb
+from webapp.company_research_web import CompanyResearchWeb
 
 # ページ設定
 st.set_page_config(
@@ -237,7 +238,7 @@ def main():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     selected_function = st.radio(
         "処理機能を選択してください",
-        ["📊 財務処理", "🚗 車両処理"],
+        ["📊 財務処理", "🚗 車両処理", "🔍 企業調査"],
         index=1,  # デフォルトで車両処理を選択
         horizontal=True,
         label_visibility="collapsed"
@@ -251,6 +252,8 @@ def main():
         financial_processing_tab()
     elif selected_function == "🚗 車両処理":
         vehicle_processing_tab()
+    elif selected_function == "🔍 企業調査":
+        company_research_tab()
 
 
 def vehicle_processing_tab():
@@ -573,6 +576,168 @@ def financial_processing_tab():
                 )
 
                 st.balloons()
+
+            except Exception as e:
+                st.markdown(f"""
+                <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; border-radius: 5px;">
+                    <h4 style="margin: 0; color: #991b1b;">❌ エラーが発生しました</h4>
+                    <p style="margin: 0.5rem 0 0 0; color: #7f1d1d;">{str(e)}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                with st.expander("詳細なエラー情報"):
+                    st.exception(e)
+
+                st.info("💡 問題が解決しない場合は、管理者に連絡してください。")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def company_research_tab():
+    """企業情報調査タブ"""
+
+    # 使い方ガイド
+    st.markdown("""
+    <div class="card">
+        <div class="card-title">📖 使い方</div>
+        <p>
+        <strong>1.</strong> 会社名、住所、代表者名を入力<br>
+        <strong>2.</strong> 「企業情報を調査」ボタンをクリック<br>
+        <strong>3.</strong> AIが保有する情報から企業情報を抽出（採用情報、インタビュー、ニュースなど）<br>
+        <strong>4.</strong> 生成されたWord文書をダウンロード
+        </p>
+        <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
+        ⚠️ 簡易版：2025年1月までのAIトレーニングデータから情報を抽出（リアルタイムWeb検索ではありません）
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 入力エリア
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📝 企業情報</div>', unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        company_name = st.text_input(
+            "会社名（必須）",
+            placeholder="例: 株式会社野木工業",
+            help="調査対象の会社名を入力してください",
+            key="research_company_name"
+        )
+
+        address = st.text_input(
+            "所在地（必須）",
+            placeholder="例: 東京都中央区日本橋",
+            help="会社の所在地を入力してください",
+            key="research_address"
+        )
+
+    with col2:
+        representative = st.text_input(
+            "代表者名（必須）",
+            placeholder="例: 山田太郎",
+            help="代表取締役の氏名を入力してください",
+            key="research_representative"
+        )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.info("💡 入力した情報をもとにAIが保有するデータから企業情報を抽出します")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # 検索対象の説明
+    st.markdown("""
+    <div class="card">
+        <div class="card-title">🔍 抽出内容</div>
+        <p>以下の情報をAIトレーニングデータから抽出します：</p>
+        <ul>
+            <li>📌 会社概要・事業内容</li>
+            <li>👥 採用情報（求人、社員数、待遇など）</li>
+            <li>🎤 代表者インタビュー・発言</li>
+            <li>📰 ニュース・プレスリリース</li>
+        </ul>
+        <p><strong>※ 確実な情報のみを抽出します（推測・捏造なし）</strong></p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # バリデーション
+    if not company_name or not address or not representative:
+        st.markdown("""
+        <div class="info-box">
+            ⚠️ すべての項目を入力してください
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    # 処理実行
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        if st.button("🔍 企業情報を調査する", type="primary", use_container_width=True):
+            try:
+                # プログレスバー表示
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+
+                status_text.text("情報抽出を開始しています...")
+                progress_bar.progress(10)
+
+                # プロセッサ初期化
+                processor = CompanyResearchWeb()
+                progress_bar.progress(20)
+
+                # AIトレーニングデータから情報抽出
+                status_text.text(f"「{company_name}」の情報を抽出中...")
+                progress_bar.progress(30)
+
+                company_info = processor.search_company_info(
+                    company_name,
+                    address,
+                    representative
+                )
+
+                progress_bar.progress(70)
+                status_text.text("情報を整理しています...")
+
+                # Word文書生成
+                word_bytes = processor.generate_word_report(company_info)
+
+                progress_bar.progress(95)
+                status_text.text("Word文書を生成中...")
+
+                # 完了
+                progress_bar.progress(100)
+                status_text.empty()
+                progress_bar.empty()
+
+                # 成功メッセージ
+                sections_count = len(company_info.get("sections", []))
+                st.markdown(f"""
+                <div class="success-box">
+                    <h3 style="margin: 0; color: #065f46;">✅ 調査完了！</h3>
+                    <p style="margin: 0.5rem 0 0 0;">{sections_count}カテゴリの情報を収集しました</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # ダウンロードボタン
+                st.download_button(
+                    label="📥 調査レポートをダウンロード（Word）",
+                    data=word_bytes,
+                    file_name=f"企業情報調査_{company_name}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
+
+                st.balloons()
+
+                # ブラウザ通知
+                show_notification(
+                    "企業調査完了！",
+                    f"{company_name}の情報収集が完了しました。"
+                )
 
             except Exception as e:
                 st.markdown(f"""
