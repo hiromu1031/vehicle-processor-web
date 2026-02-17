@@ -617,15 +617,6 @@ def pdf_splitter_tab():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 解析ボタン
-    if not uploaded_pdfs:
-        st.markdown("""
-        <div class="info-box">
-            ℹ️ PDFファイルをアップロードしてください
-        </div>
-        """, unsafe_allow_html=True)
-        return
-
     # 解析処理
     st.markdown('<div class="card">', unsafe_allow_html=True)
 
@@ -636,6 +627,11 @@ def pdf_splitter_tab():
     col1, col2, col3 = st.columns([1, 3, 1])
     with col2:
         if st.button("🔍 ページを解析する", type="primary", use_container_width=True):
+            # ボタンクリック時にファイルの有無をチェック
+            if not uploaded_pdfs:
+                st.error("❌ PDFファイルをアップロードしてください")
+                st.stop()
+
             try:
                 # プログレスバー表示
                 progress_bar = st.progress(0)
