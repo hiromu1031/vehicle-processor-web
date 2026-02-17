@@ -209,6 +209,8 @@ def main():
 
     # ========== タブ2: 財務処理 ==========
     with tab2:
+        st.success("✅ 財務処理タブが開かれました！")
+        st.write("---")
         try:
             financial_processing_tab()
         except Exception as e:
