@@ -114,6 +114,11 @@ st.markdown("""
 
 def check_password():
     """パスワード認証をチェック"""
+    # ===== テスト運用中はパスワード不要 =====
+    # 本番運用時は以下の行を削除してパスワード認証を有効化してください
+    return True
+    # ==========================================
+
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
 
