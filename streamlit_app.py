@@ -8,6 +8,7 @@ from webapp.vehicle_processor_web import VehicleProcessorWeb
 from webapp.financial_processor_web import FinancialProcessorWeb
 from webapp.company_research_web import CompanyResearchWeb
 from webapp.employee_processor_web import EmployeeProcessorWeb
+from webapp.im_generator_web import IMGeneratorWeb
 
 # ページ設定
 st.set_page_config(
@@ -239,8 +240,8 @@ def main():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     selected_function = st.radio(
         "処理機能を選択してください",
-        ["📊 財務処理", "🚗 車両処理", "👥 従業員台帳", "🔍 企業調査"],
-        index=1,  # デフォルトで車両処理を選択
+        ["📋 IM作成", "📊 財務処理", "🚗 車両処理", "👥 従業員台帳", "🔍 企業調査"],
+        index=2,  # デフォルトで車両処理を選択
         horizontal=True,
         label_visibility="collapsed"
     )
@@ -249,7 +250,9 @@ def main():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # 選択された機能を表示
-    if selected_function == "📊 財務処理":
+    if selected_function == "📋 IM作成":
+        im_generation_tab()
+    elif selected_function == "📊 財務処理":
         financial_processing_tab()
     elif selected_function == "🚗 車両処理":
         vehicle_processing_tab()
@@ -257,6 +260,184 @@ def main():
         employee_ledger_tab()
     elif selected_function == "🔍 企業調査":
         company_research_tab()
+
+
+def im_generation_tab():
+    """IM下書き自動生成タブ"""
+
+    # 使い方ガイド
+    st.markdown("""
+    <div class="card">
+        <div class="card-title">📖 使い方</div>
+        <p>
+        <strong>1.</strong> 会社名を入力<br>
+        <strong>2.</strong> すべての資料をアップロード（決算書、会社案内、組織図、資産リストなど、複数可）<br>
+        <strong>3.</strong> 「IM下書きを生成」ボタンをクリック<br>
+        <strong>4.</strong> 生成されたExcelファイルをダウンロード（5シート構成）
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # メイン入力エリア
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📝 会社情報</div>', unsafe_allow_html=True)
+
+    company_name = st.text_input(
+        "会社名（必須）",
+        placeholder="例: 株式会社野木工業",
+        help="IM下書きExcelのファイル名に使用されます",
+        label_visibility="collapsed",
+        key="im_company_name"
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ファイルアップロードエリア
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📎 資料ファイル（すべて）</div>', unsafe_allow_html=True)
+
+    st.markdown("""
+    **💡 アップロードする資料:**
+    - 決算書PDF（3期分） - 財務情報を抽出
+    - 会社案内PDF/画像 - 会社概要、事業内容を抽出
+    - 組織図、従業員リスト - 組織・人員情報を抽出
+    - 車両台帳、資産リスト - 資産情報を抽出
+    - 借入金明細 - 負債情報を抽出
+    - 取引先リスト - 取引先情報を抽出
+    - その他資料 - すべて統合してIM下書きを作成
+    """)
+
+    uploaded_files = st.file_uploader(
+        "資料ファイルをアップロード（まとめて選択可能）",
+        type=['jpg', 'jpeg', 'png', 'pdf', 'xlsx', 'xls'],
+        accept_multiple_files=True,
+        help="すべての資料を一度にアップロードしてください",
+        label_visibility="collapsed",
+        key="im_files"
+    )
+
+    # ファイル情報表示
+    if uploaded_files:
+        st.markdown(f"""
+        <div class="success-box">
+            ✅ <strong>{len(uploaded_files)}件</strong>のファイルがアップロードされました
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.expander("📋 アップロードされたファイル一覧を表示"):
+            for idx, file in enumerate(uploaded_files, 1):
+                file_size_mb = file.size / (1024 * 1024)
+                st.write(f"**{idx}.** {file.name} `({file_size_mb:.2f} MB)`")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # 出力内容の説明
+    st.markdown("""
+    <div class="card">
+        <div class="card-title">📋 出力内容（Excel）</div>
+        <p>以下の5シートで構成されたExcelファイルを生成します：</p>
+        <ul>
+            <li>📄 <strong>シート1: 会社概要</strong> - 会社名、所在地、代表者、設立日、事業内容、強みなど</li>
+            <li>💰 <strong>シート2: 財務サマリー</strong> - 3期比較（売上、利益、資産、負債など）</li>
+            <li>👥 <strong>シート3: 組織・従業員</strong> - 従業員数、部門構成、役員情報など</li>
+            <li>🏢 <strong>シート4: 資産・負債</strong> - 車両、不動産、設備、借入金など</li>
+            <li>📊 <strong>シート5: その他情報</strong> - 取引先、その他特記事項など</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 生成ボタン
+    if not company_name:
+        st.markdown("""
+        <div class="info-box">
+            ⚠️ 会社名を入力してください
+        </div>
+        """, unsafe_allow_html=True)
+        st.stop()
+
+    if not uploaded_files:
+        st.markdown("""
+        <div class="info-box">
+            ℹ️ 資料ファイルをアップロードしてください
+        </div>
+        """, unsafe_allow_html=True)
+        st.stop()
+
+    # 処理実行
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        if st.button("🚀 IM下書きを生成する", type="primary", use_container_width=True):
+            try:
+                # プログレスバー表示
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+
+                status_text.text("処理を開始しています...")
+                progress_bar.progress(10)
+
+                # プロセッサ初期化
+                processor = IMGeneratorWeb()
+                progress_bar.progress(20)
+
+                # 各ファイルを処理
+                status_text.text(f"資料を解析中... (0/{len(uploaded_files)})")
+
+                # ファイル処理
+                excel_bytes = processor.process_uploaded_files(
+                    uploaded_files,
+                    company_name
+                )
+
+                progress_bar.progress(90)
+                status_text.text("Excelファイルを生成中...")
+
+                # 完了
+                progress_bar.progress(100)
+                status_text.empty()
+                progress_bar.empty()
+
+                # 成功メッセージ
+                st.markdown(f"""
+                <div class="success-box">
+                    <h3 style="margin: 0; color: #065f46;">✅ 処理完了！</h3>
+                    <p style="margin: 0.5rem 0 0 0;">{len(uploaded_files)}件の資料を処理し、5シート構成のIM下書きを作成しました</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # ダウンロードボタン
+                st.download_button(
+                    label="📥 IM下書きをダウンロード",
+                    data=excel_bytes,
+                    file_name=f"IM下書き_{company_name}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+
+                st.balloons()
+
+                # ブラウザ通知
+                show_notification(
+                    "IM下書き生成完了！",
+                    f"{company_name}のIM下書きが完成しました。"
+                )
+
+            except Exception as e:
+                st.markdown(f"""
+                <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 1rem; border-radius: 5px;">
+                    <h4 style="margin: 0; color: #991b1b;">❌ エラーが発生しました</h4>
+                    <p style="margin: 0.5rem 0 0 0; color: #7f1d1d;">{str(e)}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                with st.expander("詳細なエラー情報"):
+                    st.exception(e)
+
+                st.info("💡 問題が解決しない場合は、管理者に連絡してください。")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def vehicle_processing_tab():
