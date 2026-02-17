@@ -363,22 +363,19 @@ def vehicle_processing_tab():
 def financial_processing_tab():
     """財務処理タブ"""
 
-    # デバッグ用：関数が呼ばれていることを確認
-    st.write("財務処理タブが読み込まれました")
+    # シンプルなテスト表示
+    st.title("📊 財務処理")
+    st.write("このタブは現在開発中です")
+    st.info("テストメッセージ: 財務処理タブが正しく読み込まれました")
 
-    # 使い方ガイド
-    st.markdown("""
-    <div class="card">
-        <div class="card-title">📖 使い方</div>
-        <p>
-        <strong>1.</strong> 会社名を入力<br>
-        <strong>2.</strong> 各期の決算書PDFをアップロード（最小構成: 表紙、PL、BS、販管費、原価内訳）<br>
-        <strong>3.</strong> 科目明細PDF（最新期のみ）をアップロード<br>
-        <strong>4.</strong> 「財務概要を生成」ボタンをクリック<br>
-        <strong>5.</strong> 生成されたExcelファイルをダウンロード
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # デバッグ情報
+    st.write("---")
+    st.write("デバッグ情報:")
+    st.write(f"- Streamlitバージョン: {st.__version__}")
+    st.write("- タブが正常に動作しています")
+
+    # TODO: 以下の機能は後で実装
+    return
 
     # 会社名入力
     st.markdown('<div class="card">', unsafe_allow_html=True)
